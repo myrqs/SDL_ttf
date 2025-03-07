@@ -5,15 +5,19 @@ pub fn build(b: *std.Build) void {
     const optimize = b.standardOptimizeOption(.{});
     const harfbuzz_enabled = b.option(bool, "enable-harfbuzz", "Use HarfBuzz to improve text shaping") orelse false;
 
-    const upstream = b.dependency("sdl_ttf", .{});
+    const upstream = b.dependency("SDL_ttf", .{});
 
-    const lib = b.addStaticLibrary(.{
+    const lib = b.addLibrary(.{
         .name = "SDL2_ttf",
-        .target = target,
-        .optimize = optimize,
+        .version = .{ .major = 2, .minor = 24, .patch = 0 },
+        .linkage = .static,
+        .root_module = b.createModule(.{
+            .target = target,
+            .optimize = optimize,
+            .link_libc = true,
+        }),
     });
     lib.addCSourceFile(.{ .file = upstream.path("SDL_ttf.c") });
-    lib.linkLibC();
 
     if (harfbuzz_enabled) {
         const harfbuzz_dep = b.dependency("harfbuzz", .{
@@ -30,7 +34,7 @@ pub fn build(b: *std.Build) void {
     });
     lib.linkLibrary(freetype_dep.artifact("freetype"));
 
-    const sdl_dep = b.dependency("sdl", .{
+    const sdl_dep = b.dependency("SDL", .{
         .target = target,
         .optimize = optimize,
     });
